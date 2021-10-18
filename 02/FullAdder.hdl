@@ -13,5 +13,13 @@ CHIP FullAdder {
         carry;   // Left bit of a + b + c
 
     PARTS:
-    // Put you code here:
+    Nand(a=a, b=b, out=nand1);
+    Nand(a=a, b=nand1, out=nand2);
+    Nand(a=nand1, b=b, out=nand3);
+    Nand(a=nand2, b=nand3, out=nand4);
+    Nand(a=nand4, b=c, out=nand5);
+    Nand(a=nand4, b=nand5, out=nand6);
+    Nand(a=nand5, b=c, out=nand7);
+    Nand(a=nand6, b=nand7, out=sum);
+    Nand(a=nand1, b=nand5, out=carry);
 }
