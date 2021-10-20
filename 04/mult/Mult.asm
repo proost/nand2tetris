@@ -10,3 +10,26 @@
 // R0 >= 0, R1 >= 0, and R0*R1 < 32768.
 
 // Put your code here.
+
+@R2
+M=0
+
+(LOOP)
+    @R1
+    D=M
+    @END
+    D;JEQ
+
+    @R0
+    D=M
+    @R2
+    M=D+M
+
+    @R1
+    M=M-1
+    @LOOP
+    0;JMP
+
+(END)
+    @END // 테스트 스크립트의 반복 때문에 존재
+    0;JMP
