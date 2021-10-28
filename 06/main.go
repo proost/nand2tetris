@@ -28,7 +28,7 @@ func assertBlank(loc *string, flag string) {
 
 func validateFileFormat(name *string, format string) {
 	temp := strings.Split(*name, ".")
-	if temp[len(temp) - 1] != format {
+	if temp[len(temp)-1] != format {
 		log.Fatalf("Format of %s must be %s", *name, format)
 	}
 }
@@ -43,6 +43,15 @@ func main() {
 
 	parser := parser.New(file)
 	result := make([]string, 0)
+
+	// phase 1
+	for parser.HasMoreCommands() {
+		parser.Advance()
+	}
+
+	parser.Rewind()
+
+	// phase 2
 	for parser.HasMoreCommands() {
 		parser.Advance()
 
