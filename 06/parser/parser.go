@@ -19,16 +19,16 @@ const (
 )
 
 type Parser struct {
-	scanner *bufio.Scanner
+	scanner     *bufio.Scanner
 	commandType COMMAND_TYPE
-	symbol string
-	dest string
-	comp string
-	jump string
-	binaryCode string
+	symbol      string
+	dest        string
+	comp        string
+	jump        string
+	binaryCode  string
 }
 
-func New(file *os.File) *Parser{
+func New(file *os.File) *Parser {
 	return &Parser{scanner: bufio.NewScanner(file)}
 }
 
@@ -141,7 +141,7 @@ func (p *Parser) trimComment(command string) string {
 func (p *Parser) setCommandType(command string) {
 	if command[0] == '@' {
 		p.commandType = A_COMMAND
-	} else if command[0]== '(' && command[len(command)-1] == ')' {
+	} else if command[0] == '(' && command[len(command)-1] == ')' {
 		p.commandType = L_COMMAND
 		return
 	} else {
@@ -154,8 +154,8 @@ func (p *Parser) setSymbol(command string) {
 		p.symbol = command[1:]
 	}
 
-	if command[0]== '(' && command[len(command)-1] == ')' {
-		p.symbol = command[1:len(command)-1]
+	if command[0] == '(' && command[len(command)-1] == ')' {
+		p.symbol = command[1 : len(command)-1]
 	}
 }
 
@@ -166,7 +166,7 @@ func (p *Parser) setBinaryCodeWhenAInstruction(command string) {
 }
 
 func (p *Parser) setBinaryCodeWhenLInstruction(command string) {
-	command = command[1:len(command)-1]
+	command = command[1 : len(command)-1]
 
 	p.binaryCode = binaryStringToByteArray(command)
 }
@@ -237,4 +237,3 @@ func (p *Parser) setBinaryCodeWhenCInstruction() {
 
 	p.binaryCode = binaryCode
 }
-
