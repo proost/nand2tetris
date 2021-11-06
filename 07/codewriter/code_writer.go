@@ -135,6 +135,8 @@ func (w *CodeWriter) WritePushPop(command cmd.MemoryAccessCommand) {
 		pushCmd := command.(*cmd.PushCommand)
 		w.writePush(pushCmd)
 	case cmd.C_POP:
+		popCmd := command.(*cmd.PopCommand)
+		w.writePop(popCmd)
 	}
 }
 
@@ -204,4 +206,47 @@ func (w *CodeWriter) pushFromMemory(index int) {
 	w.writer.writeString("A=D+A\n")
 	w.writer.writeString("D=M\n")
 	w.push()
+}
+
+func (w *CodeWriter) writePop(command *cmd.PopCommand) {
+	switch command.Segment {
+	case "argument":
+		w.getSegmentDataFromMemory("ARG")
+		w.loadToMemory(int(command.Index))
+	case "local":
+		w.getSegmentDataFromMemory("LCL")
+		w.loadToMemory(int(command.Index))
+	case "this":
+		w.getSegmentDataFromMemory("THIS")
+		w.loadToMemory(int(command.Index))
+	case "that":
+		w.getSegmentDataFromMemory("THAT")
+		w.loadToMemory(int(command.Index))
+	case "temp":
+		w.getDataByMemoryAddress(5)
+		w.loadToMemory(int(command.Index))
+	case "pointer":
+		w.getDataByMemoryAddress(3)
+		w.loadToMemory(int(command.Index))
+	case "static":
+		w.pop()
+		w.writer.writeString("@" + w.writer.fileName + "." + strconv.Itoa(int(command.Index)) + "\n")
+		w.writer.writeString("M=D\n")
+	}
+}
+
+func (w *CodeWriter) loadToMemory(index int) {
+	w.writer.writeString("@13\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@" + strconv.Itoa(index) + "\n")
+	w.writer.writeString("D=A\n")
+	w.writer.writeString("@13\n")
+	w.writer.writeString("M=M+D\n")
+	w.writer.writeString("@SP\n")
+	w.writer.writeString("M=M-1\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@13\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("M=D\n")
 }
