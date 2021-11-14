@@ -258,7 +258,7 @@ func (p *Parser) parseFunctionCallCommand(op string) cmd.Command {
 		}
 		numOfArgs, err := strconv.Atoi(arg2)
 		if err != nil {
-			log.Fatalf("arg2 of %s command must be int, not %T", op, index)
+			log.Fatalf("arg2 of %s command must be int, not %T", op, numOfArgs)
 		}
 		if numOfArgs < 0 {
 			log.Fatalf("arg2 can't be smaller than 0, when %s command", op)
@@ -284,7 +284,7 @@ func (p *Parser) parseFunctionCallCommand(op string) cmd.Command {
 		}
 		numOfArgs, err := strconv.Atoi(arg2)
 		if err != nil {
-			log.Fatalf("arg2 of %s command must be int, not %T", op, index)
+			log.Fatalf("arg2 of %s command must be int, not %T", op, numOfArgs)
 		}
 		if numOfArgs < 0 {
 			log.Fatalf("arg2 can't be smaller than 0, when %s command", op)

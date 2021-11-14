@@ -35,7 +35,7 @@ type IfGotoCommand struct {
 }
 
 func (i *IfGotoCommand) Type() COMMAND_TYPE {
-	return C_GOTO
+	return C_IF
 }
 func (i *IfGotoCommand) FlowControlOpLiteral() string {
 	return "if-goto"

@@ -9,6 +9,8 @@ import (
 type CodeWriter struct {
 	writer      *fileWriter
 	labelNumber int
+	currentFunc string
+	callNumber  int
 }
 
 func New(asmFileName string) *CodeWriter {
@@ -35,6 +37,28 @@ func (w *CodeWriter) WriteAssembly(command cmd.Command) {
 			log.Fatalf("command is not MemoryAccessCommand, %s", memoryCmd.Type())
 		}
 		w.WritePushPop(memoryCmd)
+	case cmd.C_LABEL:
+		labelCmd, ok := command.(*cmd.LabelCommand)
+		if !ok {
+			log.Fatalf("command is not LabelCommand, %s", labelCmd.Type())
+		}
+		w.WriteLabel(labelCmd.Label)
+	case cmd.C_GOTO:
+		fallthrough
+	case cmd.C_IF:
+		flowCtrlCmd, ok := command.(cmd.FlowControlCommand)
+		if !ok {
+			log.Fatalf("command is not FlowControlCommand, %s", flowCtrlCmd.Type())
+		}
+	case cmd.C_FUNCTION:
+		fallthrough
+	case cmd.C_RETURN:
+		fallthrough
+	case cmd.C_CALL:
+		funcCallCmd, ok := command.(cmd.FunctionCallCommand)
+		if !ok {
+			log.Fatalf("command is not FlowControlCommand, %s", funcCallCmd.Type())
+		}
 	}
 }
 
@@ -137,6 +161,124 @@ func (w *CodeWriter) WritePushPop(command cmd.MemoryAccessCommand) {
 	case cmd.C_POP:
 		popCmd := command.(*cmd.PopCommand)
 		w.writePop(popCmd)
+	}
+}
+
+func (w *CodeWriter) WriteLabel(label string) {
+	w.writer.writeString("(" + w.nameLabel(label) + ")\n")
+}
+
+func (w *CodeWriter) WriteGo(label string) {
+	w.writer.writeString("@" + w.nameLabel(label) + "\n")
+	w.writer.writeString("0;JMP\n")
+}
+
+func (w *CodeWriter) WriteIf(label string) {
+	w.pop()
+	w.writer.writeString("@" + w.nameLabel(label) + "\n")
+	w.writer.writeString("D;JNE\n")
+}
+
+func (w *CodeWriter) WriteCall(functionName string, numArgs int) {
+	w.writer.writeString("@return" + w.currentFunc + strconv.Itoa(w.callNumber) + "\n")
+	w.writer.writeString("D=A\n")
+	w.push()
+	w.writer.writeString("@LCL\n")
+	w.writer.writeString("D=M\n")
+	w.push()
+	w.writer.writeString("@ARG\n")
+	w.writer.writeString("D=M\n")
+	w.push()
+	w.writer.writeString("@THIS\n")
+	w.writer.writeString("D=M\n")
+	w.push()
+	w.writer.writeString("@THAT\n")
+	w.writer.writeString("D=M\n")
+	w.push()
+	w.writer.writeString("@SP\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@ARG\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@" + strconv.Itoa(numArgs) + "\n")
+	w.writer.writeString("D=A\n")
+	w.writer.writeString("@ARG\n")
+	w.writer.writeString("M=M-D\n")
+	w.writer.writeString("@5\n")
+	w.writer.writeString("D=A\n")
+	w.writer.writeString("@ARG\n")
+	w.writer.writeString("M=M-D\n")
+	w.writer.writeString("@SP\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@LCL\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@" + functionName + "\n")
+	w.writer.writeString("0;JMP\n")
+	w.writer.writeString("(return" + w.currentFunc + strconv.Itoa(w.callNumber) + ")\n")
+	w.callNumber += 1
+}
+
+func (w *CodeWriter) WriteReturn() {
+	w.writer.writeString("@LCL\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@R13\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@R14\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@5\n")
+	w.writer.writeString("D=A\n")
+	w.writer.writeString("@R14\n")
+	w.writer.writeString("M=M-D\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@R14\n")
+	w.writer.writeString("M=D\n")
+	w.pop()
+	w.writer.writeString("@ARG\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@ARG\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@SP\n")
+	w.writer.writeString("M=D+1\n")
+	w.writer.writeString("@R13\n")
+	w.writer.writeString("M=M-1\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@THAT\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@R13\n")
+	w.writer.writeString("M=M-1\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@THIS\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@R13\n")
+	w.writer.writeString("M=M-1\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@ARG\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@R13\n")
+	w.writer.writeString("M=M-1\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("D=M\n")
+	w.writer.writeString("@LCL\n")
+	w.writer.writeString("M=D\n")
+	w.writer.writeString("@R14\n")
+	w.writer.writeString("A=M\n")
+	w.writer.writeString("0;JMP\n")
+}
+
+func (w *CodeWriter) WriteFunction(functionName string, numLocals int) {
+	w.currentFunc = functionName
+	w.callNumber = 0
+	w.writer.writeString("(" + functionName + ")\n")
+	for i := 0; i < numLocals; i++ {
+		w.writer.writeString("@SP\n")
+		w.writer.writeString("A=M\n")
+		w.writer.writeString("M=0\n")
+		w.writer.writeString("@SP\n")
+		w.writer.writeString("M=M+1\n")
 	}
 }
 
@@ -249,4 +391,8 @@ func (w *CodeWriter) loadToMemory(index int) {
 	w.writer.writeString("@13\n")
 	w.writer.writeString("A=M\n")
 	w.writer.writeString("M=D\n")
+}
+
+func (w *CodeWriter) nameLabel(label string) string {
+	return w.currentFunc + "$" + label
 }
